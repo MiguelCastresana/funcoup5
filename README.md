@@ -6,8 +6,8 @@ This repository contains scripts and tools for conducting network analysis using
 
 **FunCoup5** is a powerful tool for identifying functional associations between genes and proteins based on various data sources. It integrates diverse types of evidence, such as co-expression, protein-protein interactions, and phylogenetic profiles, to predict functional relationships within biological networks. The method has been widely used in bioinformatics and computational biology to explore the underlying functional organization of genomes.
 
-Access the database here: [FunCoup5 website](https://funcoup.org/search/)
-For a detailed explanation of **FunCoup5** and its applications, please refer to the [FunCoup5 paper](https://pubmed.ncbi.nlm.nih.gov/33539890/) published on PubMed.
+-  Access the database here: [FunCoup5 website](https://funcoup.org/search/).
+-  For a detailed explanation of **FunCoup5** and its applications, please refer to the [FunCoup5 paper](https://pubmed.ncbi.nlm.nih.gov/33539890/) published on PubMed.
 
 ## Repository Contents
 
