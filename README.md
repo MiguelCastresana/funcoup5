@@ -1,14 +1,23 @@
 # FunCoup5 Network Analysis
 
-This repository contains scripts and tools for conducting network analysis using **FunCoup5**, a comprehensive method for inferring functional coupling between genes and proteins.
+**FunCoup** is a framework to infer genome-wide functional couplings in 21 model organisms. Functional coupling, or functional association, is an unspecific form of association that encompasses direct physical interaction but also more general types of direct or indirect interaction like regulatory interaction or participation in the same process or pathway.
+
+This repository contains the script used to test functional association network performance.
+
+## Background
+
+-  Access the database here: [FunCoup5 website](https://funcoup.org/search/).
+-  For a detailed explanation of **FunCoup5** and its applications, please refer to the [FunCoup5 paper](https://pubmed.ncbi.nlm.nih.gov/33539890/).
 
 ## Overview
 
-**FunCoup5** is a powerful tool for identifying functional associations between genes and proteins based on various data sources. It integrates diverse types of evidence, such as co-expression, protein-protein interactions, and phylogenetic profiles, to predict functional relationships within biological networks. The method has been widely used in bioinformatics and computational biology to explore the underlying functional organization of genomes.
+The purpose of the code is to perform a comprehensive network analysis to evaluate the predictive capabilities of various biological networks (such as Funcoup, STRING, and Humannet). It involves constructing and randomizing these networks, selecting seed genes from Orphanet genesets, calculating affinity matrices using a random walk with restart (RWR) algorithm, and assessing performance using precision-recall (PR) and receiver operating characteristic (ROC) curves. The analysis is conducted across multiple iterations and data splits to ensure robustness.
 
--  Access the database here: [FunCoup5 website](https://funcoup.org/search/).
--  For a detailed explanation of **FunCoup5** and its applications, please refer to the [FunCoup5 paper](https://pubmed.ncbi.nlm.nih.gov/33539890/) published on PubMed.
+- Loading and filtering gene interaction datasets.
+- Processing input gene lists.
+- Splitting data for personalized analysis.
+- Performing Random Walk with Restart (RWR) on the gene interaction network.
+- Calculating and saving performance metrics (ROC and PR curves).
 
-## Repository Contents
-
-The purpose of the code is to perform a comprehensive network analysis to evaluate the predictive capabilities of various biological networks (such as Funcoup, STRING, and Humannet). It involves constructing and randomizing these networks, selecting seed genes from KEGG pathway data, calculating affinity matrices using a random walk with restart (RWR) algorithm, and assessing performance using precision-recall (PR) and receiver operating characteristic (ROC) curves. The analysis is conducted across multiple iterations and data splits to ensure robustness.
+**Contact**:  
+Miguel Castresana Aguirre ([miguel.castresana.aguirre@ki.se](mailto:miguel.castresana.aguirre@ki.se))
