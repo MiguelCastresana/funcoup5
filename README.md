@@ -19,5 +19,16 @@ The purpose of the code is to perform a comprehensive network analysis to evalua
 - Performing Random Walk with Restart (RWR) on the gene interaction network.
 - Calculating and saving performance metrics (ROC and PR curves).
 
+
+## Dependencies
+
+The script requires the following R packages:
+
+- **tidyverse**
+- **mygene**
+- **igraph**
+- **dnet**
+- **PRROC**
+
 **Contact**:  
 Miguel Castresana Aguirre ([miguel.castresana.aguirre@ki.se](mailto:miguel.castresana.aguirre@ki.se))
