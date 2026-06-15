@@ -1,38 +1,81 @@
 # FunCoup5 Network Analysis
 
+This repository contains R analysis scripts for benchmarking biological functional association networks, with a focus on FunCoup5 and comparisons against resources such as STRING and HumanNet.
+
 <p align="center">
-  <img src="Figure.png" alt="drawing" width="400"/>
+  <img src="Figure.png" alt="FunCoup network analysis figure" width="520" />
 </p>
 
-**FunCoup** is a framework to infer genome-wide functional couplings in 21 model organisms. Functional coupling, or functional association, is an unspecific form of association that encompasses direct physical interaction but also more general types of direct or indirect interaction like regulatory interaction or participation in the same process or pathway.
+## Scope
 
-This repository contains the script used to test functional association network performance.
+The code supports two related analyses:
 
-## Background
+- Random walk with restart benchmarking on pathway-based seed/test splits.
+- Network property comparison across curated biological gene sets and networks.
 
--  Access the database here: [FunCoup5 website](https://funcoup.org/search/).
--  For a detailed explanation of **FunCoup5** and its applications, please refer to the [FunCoup5 paper](https://pubmed.ncbi.nlm.nih.gov/33539890/).
+## Repository Layout
 
-## Overview
+```text
+.
+├── R/
+│   ├── randomwalk.R
+│   └── compare_network_properties.R
+├── docs/
+│   └── data.md
+├── tools/
+│   └── check-project.R
+├── Figure.png
+└── README.md
+```
 
-The purpose of the code is to perform a comprehensive network analysis to evaluate the predictive capabilities of various biological networks (such as Funcoup, STRING, and Humannet). It involves constructing and randomizing these networks, selecting seed genes from Orphanet genesets, calculating affinity matrices using a random walk with restart (RWR) algorithm, and assessing performance using precision-recall (PR) and receiver operating characteristic (ROC) curves. The analysis is conducted across multiple iterations and data splits to ensure robustness.
+## Scripts
 
-### **Analysis**
-1. **randomwalk.R**: Performs degree-preserving rewiring and random‐walk with restart across FunCoup, STRING, and HumanNet to benchmark PR/ROC performance on KEGG‐based seed/test splits.
-
-2. **compare_network_properties.R**: Maps curated PPI, complex, and GWAS gene sets to FunCoup, STRING, and HumanNet, then computes per-trait interaction counts and overall average link recovery in each network.
-
-
+| Script | Purpose |
+| --- | --- |
+| `R/randomwalk.R` | Defines helpers for loading networks, creating KEGG-based pathway splits, running random walk with restart, and saving PR/ROC benchmark outputs. |
+| `R/compare_network_properties.R` | Compares within-trait link recovery across FunCoup, STRING, and HumanNet using curated GWAS and mapping resources. |
 
 ## Dependencies
 
-The script requires the following R packages:
+Core R packages:
 
-- **tidyverse**
-- **mygene**
-- **igraph**
-- **dnet**
-- **PRROC**
+- `dnet`
+- `PRROC`
+- `igraph`
+- `biomaRt`
+- `dplyr`
+- `purrr`
 
-**Contact**:  
-Miguel Castresana Aguirre ([miguel.castresana.aguirre@ki.se](mailto:miguel.castresana.aguirre@ki.se))
+Install missing packages before running the full analyses. Some packages are Bioconductor packages and should be installed through `BiocManager`.
+
+## Data
+
+Large networks, gold-standard files, GWAS resources, and gene-translation tables are not committed to this repository. Place them under a local `data/` folder or point the scripts to them with environment variables.
+
+See [docs/data.md](docs/data.md) for the expected inputs.
+
+## Quick Check
+
+Run this from the repository root:
+
+```bash
+Rscript tools/check-project.R
+```
+
+This validates the repo structure and parses the R scripts. It does not download data or rerun the network benchmarks.
+
+## Example
+
+```r
+source("R/randomwalk.R")
+
+kegg <- read.delim("data/pathways/kegg.tsv")
+splits <- create_splits(kegg, n = 30, seed = 1)
+funcoup <- load_network("data/networks/funcoup.tsv")
+benchmark_network(funcoup, kegg, splits, output_prefix = "results/funcoup")
+```
+
+## Contact
+
+Miguel Castresana Aguirre  
+[miguel.castresana.aguirre@ki.se](mailto:miguel.castresana.aguirre@ki.se)

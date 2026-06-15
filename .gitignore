@@ -1,0 +1,22 @@
+# R session and project files
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata
+
+# Local libraries and generated outputs
+.Rlib/
+data/
+results/
+figures/
+*.rds
+*.RData
+*.csv
+*.tsv
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
