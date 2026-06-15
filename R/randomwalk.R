@@ -16,6 +16,12 @@ run_affinity <- function(graph, seeds, end_points, genes = igraph::V(graph)$name
     stop("Graph vertices must have names or `genes` must be provided.", call. = FALSE)
   }
 
+  seeds <- intersect(seeds, genes)
+  end_points <- intersect(end_points, genes)
+  if (length(seeds) == 0 || length(end_points) == 0) {
+    return(list(pr_auc = NA_real_, roc_auc = NA_real_))
+  }
+
   seed_vector <- as.integer(genes %in% seeds)
   seed_data <- data.frame(seed = seed_vector, row.names = genes)
 
@@ -33,6 +39,10 @@ run_affinity <- function(graph, seeds, end_points, genes = igraph::V(graph)$name
   true_scores <- scores$score[scores$gene %in% end_points]
   false_scores <- scores$score[!(scores$gene %in% end_points)]
 
+  if (length(true_scores) == 0 || length(false_scores) == 0) {
+    return(list(pr_auc = NA_real_, roc_auc = NA_real_))
+  }
+
   pr <- PRROC::pr.curve(scores.class0 = true_scores, scores.class1 = false_scores)
   roc <- PRROC::roc.curve(scores.class0 = true_scores, scores.class1 = false_scores)
 
@@ -45,6 +55,14 @@ create_splits <- function(kegg, n = 30, seed = NULL) {
   }
 
   groups <- unique(as.vector(kegg[, 2]))
+  groups <- groups[vapply(groups, function(group) {
+    length(unique(as.vector(kegg[kegg[, 2] == group, 1]))) >= 2
+  }, logical(1))]
+
+  if (length(groups) == 0) {
+    stop("No KEGG groups contain at least two genes.", call. = FALSE)
+  }
+
   data_a <- vector("list", n)
   data_b <- vector("list", n)
 
@@ -53,8 +71,8 @@ create_splits <- function(kegg, n = 30, seed = NULL) {
     split_b <- data.frame()
 
     for (group in groups) {
-      genes <- as.vector(kegg[kegg[, 2] == group, 1])
-      genes_a <- sample(genes, round(length(genes) / 2))
+      genes <- unique(as.vector(kegg[kegg[, 2] == group, 1]))
+      genes_a <- sample(genes, floor(length(genes) / 2))
       genes_b <- setdiff(genes, genes_a)
 
       split_a <- rbind(split_a, data.frame(ensembl_gene_id = genes_a, disease = group))
@@ -69,6 +87,13 @@ create_splits <- function(kegg, n = 30, seed = NULL) {
 }
 
 benchmark_network <- function(graph_data, kegg, splits, output_prefix, n_networks = 30) {
+  if (nrow(graph_data) == 0) {
+    stop("`graph_data` must contain at least one edge.", call. = FALSE)
+  }
+  if (missing(splits) || !all(c("A", "B") %in% names(splits))) {
+    stop("`splits` must be a list with A and B entries.", call. = FALSE)
+  }
+
   dir.create(dirname(output_prefix), recursive = TRUE, showWarnings = FALSE)
 
   results_pr <- vector("list", n_networks)
@@ -86,7 +111,7 @@ benchmark_network <- function(graph_data, kegg, splits, output_prefix, n_network
       part_a <- split(splits$A[[i]], splits$A[[i]][, 2])
       part_b <- split(splits$B[[i]], splits$B[[i]][, 2])
 
-      for (group in names(part_a)) {
+      for (group in intersect(names(part_a), names(part_b))) {
         result <- run_affinity(graph, part_a[[group]][, 1], part_b[[group]][, 1], genes)
         pr_values <- c(pr_values, result$pr_auc)
         roc_values <- c(roc_values, result$roc_auc)

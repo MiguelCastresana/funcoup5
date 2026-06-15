@@ -20,7 +20,34 @@ required_file <- function(path) {
 }
 
 normalize_score <- function(x) {
-  (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+  finite <- is.finite(x)
+  if (!any(finite)) {
+    return(rep(NA_real_, length(x)))
+  }
+
+  score_range <- range(x[finite], na.rm = TRUE)
+  if (score_range[1] == score_range[2]) {
+    return(ifelse(finite, 1, NA_real_))
+  }
+
+  out <- rep(NA_real_, length(x))
+  out[finite] <- (x[finite] - score_range[1]) / diff(score_range)
+  out
+}
+
+name_result <- function(result, names_out) {
+  if (is.null(result) || nrow(result) == 0) {
+    result <- as.data.frame(matrix(ncol = length(names_out), nrow = 0))
+  }
+  names(result) <- names_out
+  result
+}
+
+safe_network_mean <- function(values, denominator) {
+  if (length(values) == 0 || denominator == 0) {
+    return(NA_real_)
+  }
+  mean(as.numeric(values), na.rm = TRUE) / denominator
 }
 
 gold_files <- list(
@@ -51,10 +78,13 @@ gwas[, 35] <- as.numeric(substring(gwas[, 1], 1, 2))
 gwas_filtered <- gwas[gwas[, 35] == 20 & as.numeric(gwas[, 28]) < 5e-8, ]
 gwas_filtered[, 35] <- as.numeric(substring(gwas_filtered[, 4], 1, 4))
 
-gwas_genes <- do.call(rbind, lapply(unique(gwas_filtered[, 8]), function(trait) {
+gwas_genes <- dplyr::bind_rows(lapply(unique(gwas_filtered[, 8]), function(trait) {
   genes <- unlist(strsplit(as.vector(gwas_filtered[gwas_filtered[, 8] == trait, 18]), ","))
   data.frame(values = trimws(genes), disease = trait)
 }))
+if (nrow(gwas_genes) == 0) {
+  stop("No GWAS gene-trait pairs remained after filtering.", call. = FALSE)
+}
 gwas_genes <- gwas_genes[!duplicated(gwas_genes), ]
 
 ensembl <- biomaRt::useMart("ensembl")
@@ -104,7 +134,12 @@ evaluate_network <- function(traits, network_data, gene_columns, all_network_gen
     data.frame(count = nrow(interactions), total = ncol(possible_pairs), trait = trait)
   })
 
-  do.call(rbind, results)
+  results <- Filter(Negate(is.null), results)
+  if (length(results) == 0) {
+    return(data.frame(count = integer(), total = integer(), trait = character()))
+  }
+
+  dplyr::bind_rows(results)
 }
 
 traits <- unique(translated_diseases$disease)
@@ -112,9 +147,9 @@ funcoup_results <- evaluate_network(traits, funcoup, c(1, 2), network_genes$func
 humannet_results <- evaluate_network(traits, humannet_filtered, c(1, 2), network_genes$humannet, mapped = FALSE)
 string_results <- evaluate_network(traits, string, c(1, 2), network_genes$string)
 
-colnames(funcoup_results) <- c("FunCoup_links", "total", "disease")
-colnames(humannet_results) <- c("HumanNet_links", "total", "disease")
-colnames(string_results) <- c("STRING_links", "total", "disease")
+funcoup_results <- name_result(funcoup_results, c("FunCoup_links", "total", "disease"))
+humannet_results <- name_result(humannet_results, c("HumanNet_links", "total", "disease"))
+string_results <- name_result(string_results, c("STRING_links", "total", "disease"))
 
 merged <- purrr::reduce(
   list(
@@ -130,8 +165,8 @@ merged[is.na(merged)] <- 0
 list(
   common_gold_standard_ids = common_ids,
   complex_sets = list(fc4 = complex_fc4, fc5 = complex_fc5),
-  funcoup_mean = mean(as.numeric(merged$FunCoup_links)) / nrow(funcoup),
-  string_mean = mean(as.numeric(merged$STRING_links)) / nrow(string),
-  humannet_mean = mean(as.numeric(merged$HumanNet_links)) / nrow(humannet_filtered),
+  funcoup_mean = safe_network_mean(merged$FunCoup_links, nrow(funcoup)),
+  string_mean = safe_network_mean(merged$STRING_links, nrow(string)),
+  humannet_mean = safe_network_mean(merged$HumanNet_links, nrow(humannet_filtered)),
   merged_table = merged
 )
